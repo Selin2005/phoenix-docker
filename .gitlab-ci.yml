@@ -1,0 +1,23 @@
+stages:
+  - build
+
+variables:
+  # Use Docker-in-Docker
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_DRIVER: overlay2
+  IMAGE_NAME: registry.hamdocker.ir/batman/kok
+  IMAGE_TAG: main
+
+build-and-push:
+  stage: build
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  before_script:
+    - echo "$REGISTRY_PASSWORD" | docker login registry.hamdocker.ir -u "$REGISTRY_USER" --password-stdin
+  script:
+    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
+    - docker push $IMAGE_NAME:$IMAGE_TAG
+  only:
+    - main
