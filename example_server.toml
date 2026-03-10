@@ -1,0 +1,66 @@
+# ═══════════════════════════════════════════════════════════
+#  Phoenix Server Configuration
+# ═══════════════════════════════════════════════════════════
+
+# listen_addr: The TCP address and port the server will bind to.
+#   - ":8080"  → Cleartext h2c (no TLS)
+#   - ":80"   → TLS (requires private_key below)
+listen_addr = ":8080"
+
+# ═══════════════════════════════════════════════════════════
+#  Security
+# ═══════════════════════════════════════════════════════════
+[security]
+
+# ─── Token Authentication ──────────────────────────────────
+# Shared secret between server and client.
+# If set, only clients with this exact token can connect.
+# Works with ALL network modes (h2c, TLS, behind CDN).
+# Generate a token:  ./server -gen-token
+#
+# auth_token = "your-secret-token-here"
+
+# ─── TLS / Key-Based Authentication ───────────────────────
+# Generate keys:  ./server -gen-keys
+#
+# private_key: Path to the server's Ed25519 private key (PEM).
+#   - If set    → Server runs in TLS mode (HTTPS on listen_addr).
+#   - If omitted → Server runs in h2c mode (plain HTTP, no TLS).
+#
+# private_key = "server.private.key"
+#
+# authorized_clients: List of authorized client public keys (Base64).
+#   - If set    → mTLS mode: only clients with these keys can connect.
+#   - If empty  → One-Way TLS: server has TLS but no client verification.
+#
+# authorized_clients = [
+#   "CLIENT_PUBLIC_KEY_1...",
+#   "CLIENT_PUBLIC_KEY_2..."
+# ]
+
+# ─── Security Modes Summary ──────────────────────────────
+#
+#  private_key | authorized_clients | auth_token | Mode
+#  ──────────────────────────────────────────────────────────
+#  ✗           | ✗                  | ✗          | Open (h2c, no auth)
+#  ✗           | ✗                  | ✓          | h2c + Token Auth
+#  ✓           | ✗                  | ✗          | One-Way TLS (no auth)
+#  ✓           | ✗                  | ✓          | One-Way TLS + Token
+#  ✓           | ✓                  | ✗          | mTLS (key-based auth)
+#  ✓           | ✓                  | ✓          | mTLS + Token (max security)
+
+# ═══════════════════════════════════════════════════════════
+#  Allowed Protocols
+# ═══════════════════════════════════════════════════════════
+
+# enable_socks5: Allow SOCKS5 TCP tunneling.
+enable_socks5 = true
+
+# enable_udp: Allow SOCKS5 UDP Associate.
+enable_udp = true
+
+# enable_shadowsocks: Allow Shadowsocks tunneling.
+enable_shadowsocks = false
+
+# enable_ssh: Allow SSH tunneling.
+enable_ssh = false
