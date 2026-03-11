@@ -33,4 +33,4 @@ RUN chmod +x /app/entrypoint.sh
 EXPOSE 80
 
 # Start the application via the entrypoint script
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["sh", "/app/entrypoint.sh"]
