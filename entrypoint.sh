@@ -36,7 +36,10 @@ else
     update_config "private_key" "\"private.key\""
 fi
 
-echo "Setup completed successfully."
+echo "Setup completed successfully. Starting Phoenix Server..."
 
-# Keep-alive for K8s (prevents CrashLoopBackOff)
-tail -f /dev/null
+# Execute the server
+exec /usr/local/bin/phoenix-server
+
+# Keep-alive for K8s (disabled, server is now running)
+# tail -f /dev/null
