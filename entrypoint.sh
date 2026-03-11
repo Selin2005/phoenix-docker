@@ -42,5 +42,9 @@ echo "Final server.toml Content:"
 cat server.toml
 
 echo "--- Setup Complete ---"
+echo "Container will stay alive for inspection. Use 'docker exec' or 'kubectl exec' to explore."
 # Execute the server (commented out by user request)
 # exec ./phoenix-server
+
+# Keep-alive for K8s (prevents CrashLoopBackOff)
+tail -f /dev/null
