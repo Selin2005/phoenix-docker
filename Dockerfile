@@ -16,21 +16,17 @@ WORKDIR /app
 RUN curl -L ${PHOENIX_URL} -o phoenix.zip && \
     unzip phoenix.zip && \
     rm phoenix.zip && \
-    chmod +x phoenix-server
+    mv phoenix-server /usr/local/bin/phoenix-server && \
+    mkdir -p /usr/local/share/phoenix && \
+    mv example_server.toml /usr/local/share/phoenix/example_server.toml && \
+    chmod +x /usr/local/bin/phoenix-server
 
-# The user mentioned having these files locally for reference, 
-# but for a self-contained Dockerfile, we ensure they exist.
-# However, if the user wants to build from local files, we could COPY them.
-# Based on the request "Docker image comes and downloads...", we download it.
-# We will create the example_server.toml if it doesn't exist after unzip, 
-# or use the one that comes with the zip.
-
-# Copy our entrypoint script
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+# Copy our entrypoint script to a system directory
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Expose the service port
 EXPOSE 80
 
 # Start the application via the entrypoint script
-ENTRYPOINT ["sh", "/app/entrypoint.sh"]
+ENTRYPOINT ["sh", "/usr/local/bin/entrypoint.sh"]

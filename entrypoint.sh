@@ -1,7 +1,10 @@
 #!/bin/sh
 
-# Copy example to server.toml
-cp example_server.toml server.toml || exit 1
+# Copy example to server.toml if it doesn't exist locally
+if [ ! -f "server.toml" ]; then
+    echo "Creating server.toml from system template..."
+    cp /usr/local/share/phoenix/example_server.toml server.toml || exit 1
+fi
 
 # Function to update configuration fields
 update_config() {
@@ -16,7 +19,7 @@ update_config() {
 }
 
 # Generate security keys
-./phoenix-server -gen-keys > public_key.log 2>&1
+/usr/local/bin/phoenix-server -gen-keys > public_key.log 2>&1
 
 # Apply requested configurations
 update_config "listen_addr" "\":80\""
@@ -29,7 +32,7 @@ update_config "private_key" "\"private.key\""
 echo "Setup completed successfully."
 
 # Execute the server (commented out by user request)
-# exec ./phoenix-server
+# exec /usr/local/bin/phoenix-server
 
 # Keep-alive for K8s (prevents CrashLoopBackOff)
 tail -f /dev/null
