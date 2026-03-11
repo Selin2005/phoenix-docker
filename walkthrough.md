@@ -53,17 +53,31 @@ Once you have reviewed the keys, you can run the server inside the k8s/docker en
 ./phoenix-server
 ```
 
-## Smart Configuration & Key Persistence
-The Docker image now handles configuration intelligently:
-1. **Always Produce Keys**: `./phoenix-server -gen-keys` output is always saved to `/app/public_key.log`.
-2. **Conditional Setup**: 
-   - If `/app/server.toml` **does not** exist, the script creates it and applies all automatic settings (80:80, enable_socks5, etc.).
-   - If `/app/server.toml` **does** exist (e.g. from your ConfigMap), the script **skips all changes** to preserve your custom file exactly as it is.
-3. **Log Accessibility**: You can find your public key in your mounted `/app` folder (if writable) or via the container logs.
+## K8s Volume Mount Compatibility
+If you mount a **ConfigMap** or **Volume** to `/app`, the original files in that directory will be hidden. To fix this:
+1. **Relocated Binaries**: `phoenix-server` and `entrypoint.sh` are now located in `/usr/local/bin/`.
+2. **System Templates**: `example_server.toml` is stored in `/usr/local/share/phoenix/`.
+3. **Safe Setup**: The script now detects if `server.toml` is missing in `/app` and automatically restores it from the system template before applying your configurations.
+
+This ensures that your `ConfigMap` and our automatic setup work perfectly together.
+## Critical: K8s Path Fix
+If you previously had a `command: ["/app/entrypoint.sh"]` in your K8s YAML, you **must** update it or remove it.
+
+**Why?** Because when you mount a ConfigMap to `/app`, it hides the old file. We moved it to a safe place.
+
+**The Fix:**
+Update your K8s manifest to use the new system path:
+```yaml
+command: ["sh", "/usr/local/bin/entrypoint.sh"]
+```
 
 ## Verification
-- Implemented **Conditional Overrides**: Automatic config is skipped if a custom `server.toml` is found.
-- Relocated executables to `/usr/local/bin` for K8s mount compatibility.
-- Redirected key generation logs to `/app/public_key.log`.
-- Fixed K8s `CrashLoopBackOff` with Keep-Alive.
+- **Relocated Executables**: Moved to `/usr/local/bin` to prevent shadowing by volume mounts.
+- **Smart Configuration**: Skips overrides if a custom `server.toml` is detected.
+- **Key Persistence**: Logs are saved to `/app/public_key.log`.
+- **Automatic Startup**: Server starts automatically after setup (`exec`).
+- **All Changes Pushed**: Verified on GHCR.
+- Fixed `entrypoint.sh` execution error by using explicit `sh` call.
+- Automated security setup (Key Generation & Config override).
+- Cleaned up all verbose debug logs for a professional setup process.
 - All changes pushed and verified on GitHub Actions.
