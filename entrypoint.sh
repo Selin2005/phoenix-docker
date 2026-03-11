@@ -1,11 +1,5 @@
 #!/bin/sh
 
-# Copy example to server.toml if it doesn't exist locally
-if [ ! -f "server.toml" ]; then
-    echo "Creating server.toml from system template..."
-    cp /usr/local/share/phoenix/example_server.toml server.toml || exit 1
-fi
-
 # Function to update configuration fields
 update_config() {
     local key=$1
@@ -18,21 +12,31 @@ update_config() {
     fi
 }
 
-# Generate security keys
-/usr/local/bin/phoenix-server -gen-keys > public_key.log 2>&1
+# Generate security keys and save log to /app
+# We try to write to /app, but handle potential read-only errors
+/usr/local/bin/phoenix-server -gen-keys > /app/public_key.log 2>&1
+if [ $? -ne 0 ]; then
+    echo "Warning: Could not write public_key.log to /app (might be a read-only mount)."
+fi
 
-# Apply requested configurations
-update_config "listen_addr" "\":80\""
-update_config "enable_socks5" "true"
-update_config "enable_udp" "true"
-update_config "enable_shadowsocks" "false"
-update_config "enable_ssh" "true"
-update_config "private_key" "\"private.key\""
+# Check if server.toml exists in /app (could be mounted by user)
+if [ -f "/app/server.toml" ]; then
+    echo "Custom server.toml detected. Skipping automatic configuration overrides."
+else
+    echo "No server.toml found. Constructing from system template..."
+    cp /usr/local/share/phoenix/example_server.toml /app/server.toml || exit 1
+    
+    # Apply requested configurations ONLY to the auto-generated file
+    cd /app
+    update_config "listen_addr" "\":80\""
+    update_config "enable_socks5" "true"
+    update_config "enable_udp" "true"
+    update_config "enable_shadowsocks" "false"
+    update_config "enable_ssh" "true"
+    update_config "private_key" "\"private.key\""
+fi
 
 echo "Setup completed successfully."
-
-# Execute the server (commented out by user request)
-# exec /usr/local/bin/phoenix-server
 
 # Keep-alive for K8s (prevents CrashLoopBackOff)
 tail -f /dev/null
